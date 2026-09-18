@@ -8,6 +8,23 @@ Combines all three upgraded models into one interface:
     2b. For any other food -> falls back to entering days/storage details
         (the original Random Forest model, which covers all 30 foods)
     3. Shows real recipes matched from an 8000+ recipe dataset
+
+HOW TO RUN THIS APP:
+    1. Install requirements:
+       pip install streamlit tensorflow scikit-learn joblib pandas numpy pillow --break-system-packages
+
+    2. Put these files in the SAME folder as this script:
+       - food_model.keras          (30-class food recognition)
+       - class_names.txt
+       - freshness_model_v2.keras  (photo-based binary freshness: produce/meat/bread)
+       - freshness_v2_class_names.txt
+       - expiry_model.joblib       (Random Forest freshness, all 30 foods)
+       - food_encoder.joblib
+       - storage_encoder.joblib
+       - status_encoder.joblib
+       - recipe_lookup.json        (real recipes matched to each food)
+
+    3. Run: streamlit run app.py
 """
 
 import json
@@ -21,7 +38,7 @@ import tensorflow as tf
 
 st.set_page_config(page_title="PantryPal - Smart Food Storage", page_icon="🥑", layout="centered")
 
-# ==================== BEAUTIFIED UI & INTERFACE CSS ====================
+# ==================== INTERFACE DESIGN & THEME OVERRIDES ====================
 st.markdown(
     """
     <style>
@@ -30,7 +47,7 @@ st.markdown(
         color-scheme: light !important;
     }
 
-    /* Animated Breathing Background */
+    /* Animated Breathing Pastel Background */
     @keyframes pastelBreathe {
         0%   { background: radial-gradient(circle at 20% 20%, #ffe4e6 0%, #fff0f3 60%, #fff5f7 100%); }
         25%  { background: radial-gradient(circle at 80% 30%, #f3e8ff 0%, #fae8ff 60%, #fff5f7 100%); }
@@ -45,12 +62,12 @@ st.markdown(
         background-color: #fff5f7 !important;
     }
 
-    /* Elevate Content Layer Above Background Elements */
+    /* Keep App Content Layer Above Animation Elements */
     .stApp > header, .main, div[data-testid="stToolbar"] {
         z-index: 10 !important;
     }
 
-    /* Top Navigation Header Bar Fix */
+    /* Blended Header Bar Theme Fix */
     header[data-testid="stHeader"] {
         background-color: rgba(255, 245, 247, 0.4) !important;
         backdrop-filter: blur(12px) !important;
@@ -59,12 +76,12 @@ st.markdown(
         color: #881337 !important;
     }
 
-    /* Override System Dark Mode Defaults for Text & Labels */
+    /* Dark Mode Text & Label Contrast Overrides */
     label, p, span, div, h1, h2, h3, h4, h5, h6 {
         color: #4a041f !important;
     }
 
-    /* Input Fields, Select Boxes, and Steppers */
+    /* Input Fields, Select Boxes, and Stepper Controls */
     div[data-baseweb="select"] > div, 
     div[data-baseweb="input"] > div,
     input, select {
@@ -82,7 +99,7 @@ st.markdown(
         color: #4a041f !important;
     }
 
-    /* Brand Header Titles */
+    /* Brand Header Banner */
     .app-title-container {
         text-align: center;
         margin-top: 5px;
@@ -106,7 +123,7 @@ st.markdown(
         margin: 0;
     }
 
-    /* Glass Cards */
+    /* Glass Welcome Container */
     .glass-card {
         background: rgba(255, 255, 255, 0.8);
         border: 1px solid rgba(251, 113, 133, 0.3);
@@ -118,7 +135,7 @@ st.markdown(
         text-align: center;
     }
 
-    /* Landing Feature Cards */
+    /* Landing Page Feature Cards */
     .landing-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -138,7 +155,7 @@ st.markdown(
     .feature-title { font-size: 0.95rem; font-weight: 800; color: #881337 !important; }
     .feature-desc { font-size: 0.78rem; color: #be123c !important; margin-top: 2px; }
 
-    /* Glowing Maroon Buttons */
+    /* Glowing Action Buttons */
     div.stButton > button {
         background: linear-gradient(135deg, #881337 0%, #be123c 50%, #f472b6 100%) !important;
         color: #ffffff !important;
@@ -155,7 +172,7 @@ st.markdown(
         box-shadow: 0 12px 28px rgba(136, 19, 55, 0.35), 0 0 25px rgba(244, 114, 182, 0.5) !important;
     }
 
-    /* Continuous Background Falling Food Animation Layer */
+    /* Background Animated Falling Food Container */
     .falling-container {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -178,7 +195,7 @@ st.markdown(
     }
     </style>
 
-    <!-- Falling Food Overlay -->
+    <!-- Falling Food Overlay Elements -->
     <div class="falling-container">
         <div class="food-item" style="left: 5%; animation-delay: 0s;">🍒</div>
         <div class="food-item" style="left: 15%; animation-delay: 1.8s;">🍊</div>
@@ -193,7 +210,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Header Title Card
+# Landing Display
 st.markdown(
     """
     <div class="app-title-container">
@@ -229,8 +246,13 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# =================================================================
+# ==================== ORIGINAL APP LOGIC ====================
 
+# Foods the photo-based freshness model was trained on - for anything else,
+# we fall back to the Random Forest model with typed-in storage details
+# Foods the NEW photo-based freshness model (v2) was trained on - matches
+# our 30-class food list exactly (bellpepper -> pepper). Everything else
+# falls back to the Random Forest model with typed-in storage details.
 PHOTO_FRESHNESS_FOODS = {
     "apple", "banana", "carrot", "tomato", "potato", "orange",
     "cucumber", "mango", "grape", "strawberry", "pepper",
