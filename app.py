@@ -8,45 +8,29 @@ Combines all three upgraded models into one interface:
     2b. For any other food -> falls back to entering days/storage details
         (the original Random Forest model, which covers all 30 foods)
     3. Shows real recipes matched from an 8000+ recipe dataset
-
-HOW TO RUN THIS APP:
-    1. Install requirements:
-       pip install streamlit tensorflow scikit-learn joblib pandas numpy pillow --break-system-packages
-
-    2. Put these files in the SAME folder as this script:
-       - food_model.keras          (30-class food recognition)
-       - class_names.txt
-       - freshness_model_v2.keras  (photo-based binary freshness: produce/meat/bread)
-       - freshness_v2_class_names.txt
-       - expiry_model.joblib       (Random Forest freshness, all 30 foods)
-       - food_encoder.joblib
-       - storage_encoder.joblib
-       - status_encoder.joblib
-       - recipe_lookup.json        (real recipes matched to each food)
-
-    3. Run: streamlit run app.py
 """
 
-import streamlit as st
+import json
+import os
+import joblib
 import numpy as np
 import pandas as pd
-import joblib
-import tensorflow as tf
-import json
 from PIL import Image
+import streamlit as st
+import tensorflow as tf
 
-st.set_page_config(page_title="Smart Food Storage", page_icon="🍎")
+st.set_page_config(page_title="PantryPal - Smart Food Storage", page_icon="🥑", layout="centered")
 
-# ==================== CUSTOM INTERFACE DESIGN ====================
+# ==================== BEAUTIFIED UI & INTERFACE CSS ====================
 st.markdown(
     """
     <style>
-    /* Force Light Theme Colors across System Dark & Light Modes */
+    /* Force Light Color Scheme across System Dark/Light Modes */
     :root {
         color-scheme: light !important;
     }
 
-    /* Subtle Animated Pastel Gradient Background */
+    /* Animated Breathing Background */
     @keyframes pastelBreathe {
         0%   { background: radial-gradient(circle at 20% 20%, #ffe4e6 0%, #fff0f3 60%, #fff5f7 100%); }
         25%  { background: radial-gradient(circle at 80% 30%, #f3e8ff 0%, #fae8ff 60%, #fff5f7 100%); }
@@ -61,12 +45,12 @@ st.markdown(
         background-color: #fff5f7 !important;
     }
 
-    /* Fix Main Container Depth to Sit Above Background Overlay */
+    /* Elevate Content Layer Above Background Elements */
     .stApp > header, .main, div[data-testid="stToolbar"] {
         z-index: 10 !important;
     }
 
-    /* Top Navigation Header Bar Theme Matching */
+    /* Top Navigation Header Bar Fix */
     header[data-testid="stHeader"] {
         background-color: rgba(255, 245, 247, 0.4) !important;
         backdrop-filter: blur(12px) !important;
@@ -75,12 +59,12 @@ st.markdown(
         color: #881337 !important;
     }
 
-    /* Global Text & Label Color Fix for System Dark Mode */
+    /* Override System Dark Mode Defaults for Text & Labels */
     label, p, span, div, h1, h2, h3, h4, h5, h6 {
         color: #4a041f !important;
     }
 
-    /* Input Fields, Select Boxes, Radio Buttons, and Steppers */
+    /* Input Fields, Select Boxes, and Steppers */
     div[data-baseweb="select"] > div, 
     div[data-baseweb="input"] > div,
     input, select {
@@ -98,7 +82,63 @@ st.markdown(
         color: #4a041f !important;
     }
 
-    /* Glowing Maroon Action Buttons */
+    /* Brand Header Titles */
+    .app-title-container {
+        text-align: center;
+        margin-top: 5px;
+        margin-bottom: 20px;
+    }
+    .sub-brand {
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: 0.25em;
+        color: #9f1239 !important;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+    .main-brand {
+        font-size: 3.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #881337 0%, #be123c 50%, #fb7185 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.03em;
+        margin: 0;
+    }
+
+    /* Glass Cards */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(251, 113, 133, 0.3);
+        backdrop-filter: blur(16px);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(136, 19, 55, 0.08);
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    /* Landing Feature Cards */
+    .landing-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    .feature-card {
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid rgba(251, 113, 133, 0.3);
+        backdrop-filter: blur(16px);
+        border-radius: 16px;
+        padding: 16px;
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(136, 19, 55, 0.05);
+    }
+    .feature-icon { font-size: 1.6rem; margin-bottom: 4px; }
+    .feature-title { font-size: 0.95rem; font-weight: 800; color: #881337 !important; }
+    .feature-desc { font-size: 0.78rem; color: #be123c !important; margin-top: 2px; }
+
+    /* Glowing Maroon Buttons */
     div.stButton > button {
         background: linear-gradient(135deg, #881337 0%, #be123c 50%, #f472b6 100%) !important;
         color: #ffffff !important;
@@ -115,13 +155,10 @@ st.markdown(
         box-shadow: 0 12px 28px rgba(136, 19, 55, 0.35), 0 0 25px rgba(244, 114, 182, 0.5) !important;
     }
 
-    /* Continuous Background Falling Food Animation */
+    /* Continuous Background Falling Food Animation Layer */
     .falling-container {
         position: fixed;
-        top: 0; 
-        left: 0; 
-        width: 100vw; 
-        height: 100vh;
+        top: 0; left: 0; width: 100vw; height: 100vh;
         pointer-events: none !important; 
         z-index: 0 !important; 
         overflow: hidden;
@@ -141,7 +178,7 @@ st.markdown(
     }
     </style>
 
-    <!-- Falling Food Overlay Layer -->
+    <!-- Falling Food Overlay -->
     <div class="falling-container">
         <div class="food-item" style="left: 5%; animation-delay: 0s;">🍒</div>
         <div class="food-item" style="left: 15%; animation-delay: 1.8s;">🍊</div>
@@ -155,16 +192,45 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+
+# Header Title Card
+st.markdown(
+    """
+    <div class="app-title-container">
+        <div class="sub-brand">SMART STORAGE AI</div>
+        <div class="main-brand">PantryPal</div>
+    </div>
+    <div class="glass-card">
+        <h2 style="font-size: 1.6rem; font-weight: 800; color: #881337 !important; margin-bottom: 4px;">
+            Hey, what are we cooking today? 🔍
+        </h2>
+        <p style="color: #be123c !important; font-size: 0.95rem; margin: 0;">
+            Inspect your ingredients, check freshness, and plan your meals!
+        </p>
+    </div>
+    <div class="landing-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🔍</div>
+            <div class="feature-title">Identify</div>
+            <div class="feature-desc">AI Photo Detection</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🌱</div>
+            <div class="feature-title">Freshness</div>
+            <div class="feature-desc">Quality & Status</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⏳</div>
+            <div class="feature-title">Expiry</div>
+            <div class="feature-desc">Shelf Life Estimator</div>
+        </div>
+    </div>
+""",
+    unsafe_allow_html=True,
+)
+
 # =================================================================
 
-st.title("🍎 Smart Food Storage")
-st.write("Upload a food photo to identify it, then check how fresh it likely is.")
-
-# Foods the photo-based freshness model was trained on - for anything else,
-# we fall back to the Random Forest model with typed-in storage details
-# Foods the NEW photo-based freshness model (v2) was trained on - matches
-# our 30-class food list exactly (bellpepper -> pepper). Everything else
-# falls back to the Random Forest model with typed-in storage details.
 PHOTO_FRESHNESS_FOODS = {
     "apple", "banana", "carrot", "tomato", "potato", "orange",
     "cucumber", "mango", "grape", "strawberry", "pepper",
