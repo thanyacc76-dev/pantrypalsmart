@@ -9,40 +9,41 @@ import tensorflow as tf
 # Page Config
 st.set_page_config(page_title="PantryPal", page_icon="🥑", layout="centered")
 
-# Custom CSS for Breathing Glassmorphism, Animations, Floating Icons & Glowing Buttons
+# Custom CSS for Baby Pink Base, Pastel Breathing Gradient, Falling Food, and Maroon-Pink Buttons
 st.markdown(
     """
     <style>
-    /* 1. Breathing Glassmorphic Background (Dark Blue, Green, Yellow, Purple, Maroon) */
-    @keyframes breatheBackground {
-        0%   { background: radial-gradient(circle at 20% 20%, #0d1b2a 0%, #081c15 50%, #000814 100%); }
-        25%  { background: radial-gradient(circle at 80% 30%, #1a0c27 0%, #28051a 50%, #0a0112 100%); }
-        50%  { background: radial-gradient(circle at 50% 80%, #1f1a00 0%, #0b251a 50%, #020617 100%); }
-        75%  { background: radial-gradient(circle at 20% 70%, #2b0910 0%, #110d2c 50%, #03001e 100%); }
-        100% { background: radial-gradient(circle at 20% 20%, #0d1b2a 0%, #081c15 50%, #000814 100%); }
+    /* 1. Light Baby Pink Background + Subtle Pastel Breathing Glow */
+    @keyframes pastelBreathe {
+        0%   { background: radial-gradient(circle at 20% 20%, #ffe4e6 0%, #fff0f3 60%, #fff5f7 100%); }
+        25%  { background: radial-gradient(circle at 80% 30%, #f3e8ff 0%, #fae8ff 60%, #fff5f7 100%); }
+        50%  { background: radial-gradient(circle at 50% 80%, #dcfce7 0%, #f0fdf4 60%, #fff5f7 100%); }
+        75%  { background: radial-gradient(circle at 20% 70%, #fce7f3 0%, #fee2e2 60%, #fff5f7 100%); }
+        100% { background: radial-gradient(circle at 20% 20%, #ffe4e6 0%, #fff0f3 60%, #fff5f7 100%); }
     }
 
     .stApp {
-        animation: breatheBackground 18s ease-in-out infinite alternate;
-        color: #f8fafc;
+        animation: pastelBreathe 20s ease-in-out infinite alternate;
+        color: #4a041f;
+        background-color: #fff5f7;
         overflow-x: hidden;
     }
 
-    /* 2. Floating Background Food Icons */
+    /* 2. Side Floating Food Icons */
     .bg-icon {
         position: fixed;
         font-size: 2.2rem;
-        opacity: 0.18;
+        opacity: 0.35;
         pointer-events: none;
         z-index: 0;
         animation: floatSlow 6s ease-in-out infinite alternate;
     }
     @keyframes floatSlow {
         0% { transform: translateY(0px) rotate(0deg); }
-        100% { transform: translateY(-18px) rotate(12deg); }
+        100% { transform: translateY(-16px) rotate(10deg); }
     }
 
-    /* 3. Title Hierarchy */
+    /* 3. Title Hierarchy & Typography */
     .app-title-container {
         text-align: center;
         margin-top: 10px;
@@ -50,82 +51,104 @@ st.markdown(
     }
     .sub-brand {
         font-size: 0.85rem;
-        font-weight: 700;
+        font-weight: 800;
         letter-spacing: 0.25em;
-        color: #34d399;
+        color: #9f1239;
         text-transform: uppercase;
-        margin-bottom: 2px;
-        text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+        margin-bottom: 4px;
     }
     .main-brand {
-        font-size: 3.6rem;
+        font-size: 3.8rem;
         font-weight: 900;
-        background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 50%, #60a5fa 100%);
+        background: linear-gradient(135deg, #881337 0%, #be123c 50%, #fb7185 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         letter-spacing: -0.03em;
         margin: 0;
-        filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));
+        filter: drop-shadow(0 4px 10px rgba(190, 18, 60, 0.15));
     }
 
-    /* 4. Glowing Neon Buttons */
+    /* 4. Maroon to Light Pink Glowing Gradient Buttons */
     div.stButton > button {
-        background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%) !important;
+        background: linear-gradient(135deg, #881337 0%, #be123c 50%, #f472b6 100%) !important;
         color: #ffffff !important;
         border: none !important;
-        border-radius: 14px !important;
+        border-radius: 16px !important;
         padding: 14px 28px !important;
         font-size: 1.1rem !important;
         font-weight: 800 !important;
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), 0 0 35px rgba(59, 130, 246, 0.3) !important;
+        box-shadow: 0 8px 20px rgba(136, 19, 55, 0.3), 0 0 15px rgba(244, 114, 182, 0.4) !important;
         transition: all 0.3s ease !important;
     }
     div.stButton > button:hover {
         transform: translateY(-2px) scale(1.02) !important;
-        box-shadow: 0 0 30px rgba(16, 185, 129, 0.7), 0 0 50px rgba(59, 130, 246, 0.5) !important;
+        box-shadow: 0 12px 28px rgba(136, 19, 55, 0.4), 0 0 25px rgba(244, 114, 182, 0.6) !important;
     }
 
-    /* 5. Glassmorphism Container Cards */
+    /* 5. Glassmorphism Cards (Pastel Themed) */
     .glass-card {
-        background: rgba(15, 23, 42, 0.55);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(251, 113, 133, 0.25);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         border-radius: 20px;
         padding: 24px;
         text-align: center;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        box-shadow: 0 10px 30px rgba(136, 19, 55, 0.08);
         margin-top: 15px;
     }
 
     div[data-testid="stFileUploader"] {
-        background: rgba(15, 23, 42, 0.5);
-        border: 2px dashed rgba(52, 211, 153, 0.4);
-        backdrop-filter: blur(16px);
+        background: rgba(255, 255, 255, 0.65);
+        border: 2px dashed rgba(225, 29, 72, 0.35);
+        backdrop-filter: blur(12px);
         border-radius: 20px;
         padding: 20px;
     }
 
     .result-label {
         font-size: 0.85rem;
-        color: #94a3b8;
+        color: #9f1239;
         text-transform: uppercase;
+        font-weight: 700;
         letter-spacing: 0.08em;
     }
     .result-val {
         font-size: 1.6rem;
         font-weight: 800;
-        color: #34d399;
+        color: #881337;
         margin-top: 4px;
+    }
+
+    /* 6. Custom Falling Food Animation CSS */
+    .falling-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9999;
+        overflow: hidden;
+    }
+    .food-item {
+        position: absolute;
+        top: -60px;
+        font-size: 2.5rem;
+        animation: fallDown 2.2s linear infinite;
+    }
+    @keyframes fallDown {
+        0% { transform: translateY(0px) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
     }
     </style>
 
     <!-- Side Floating Food Icons -->
-    <div class="bg-icon" style="top: 10%; left: 4%;">🥦</div>
-    <div class="bg-icon" style="top: 28%; right: 5%;">🍎</div>
-    <div class="bg-icon" style="top: 50%; left: 3%;">🥕</div>
-    <div class="bg-icon" style="top: 72%; right: 4%;">🥑</div>
-    <div class="bg-icon" style="top: 88%; left: 6%;">🍇</div>
+    <div class="bg-icon" style="top: 12%; left: 4%;">🍒</div>
+    <div class="bg-icon" style="top: 30%; right: 5%;">🥦</div>
+    <div class="bg-icon" style="top: 52%; left: 3%;">🍎</div>
+    <div class="bg-icon" style="top: 70%; right: 4%;">🍞</div>
+    <div class="bg-icon" style="top: 86%; left: 5%;">🥛</div>
 """,
     unsafe_allow_html=True,
 )
@@ -167,6 +190,8 @@ assets = load_assets()
 # Initialize Session State Navigation
 if "page" not in st.session_state:
     st.session_state.page = "landing"
+if "animating" not in st.session_state:
+    st.session_state.animating = False
 
 # ================= PAGE 1: LANDING PAGE =================
 if st.session_state.page == "landing":
@@ -183,24 +208,40 @@ if st.session_state.page == "landing":
     st.markdown(
         """
         <div class="glass-card" style="margin-bottom: 30px;">
-            <h2 style="font-size: 1.8rem; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
+            <h2 style="font-size: 1.8rem; font-weight: 800; color: #881337; margin-bottom: 8px;">
                 Hey, what are we cooking today? 🍳
             </h2>
-            <p style="color: #94a3b8; font-size: 1rem; margin-0;">
-                Let's inspect your ingredients and see what's fresh!
+            <p style="color: #be123c; font-size: 1rem; margin: 0;">
+                Inspect your ingredients, check freshness, and plan your meals!
             </p>
         </div>
     """,
         unsafe_allow_html=True,
     )
 
+    # Render Custom Falling Food Animation (Cherries, Broccoli, Apple, Bread, Milk, Egg)
+    if st.session_state.animating:
+        st.markdown(
+            """
+            <div class="falling-container">
+                <div class="food-item" style="left: 10%; animation-delay: 0s;">🍒</div>
+                <div class="food-item" style="left: 25%; animation-delay: 0.3s;">🥦</div>
+                <div class="food-item" style="left: 40%; animation-delay: 0.1s;">🍎</div>
+                <div class="food-item" style="left: 55%; animation-delay: 0.4s;">🍞</div>
+                <div class="food-item" style="left: 70%; animation-delay: 0.2s;">🥛</div>
+                <div class="food-item" style="left: 85%; animation-delay: 0.5s;">🥚</div>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("Let's Go! 🚀", use_container_width=True):
-            # Falling Food Animation Trigger
-            st.snow()  # Streamlit animation effect
-            st.toast("🍇 🍎 🥦 Gathering your ingredients... 🥑 🥕 🌽")
-            time.sleep(1.8)
+            st.session_state.animating = True
+            st.toast("🍒 🥦 🍎 Gathering your ingredients... 🍞 🥛 🥚")
+            time.sleep(2.0)
+            st.session_state.animating = False
             st.session_state.page = "app"
             st.rerun()
 
@@ -216,7 +257,6 @@ elif st.session_state.page == "app":
         unsafe_allow_html=True,
     )
 
-    # Back to Landing option
     if st.button("← Back to Landing", use_container_width=False):
         st.session_state.page = "landing"
         st.rerun()
@@ -289,7 +329,7 @@ elif st.session_state.page == "app":
                             f"""
                         <div class="glass-card">
                             <div class="result-label">Food Detected</div>
-                            <div class="result-val" style="color: #ffffff;">{detected_food.title()}</div>
+                            <div class="result-val">{detected_food.title()}</div>
                         </div>
                         """,
                             unsafe_allow_html=True,
@@ -310,7 +350,7 @@ elif st.session_state.page == "app":
                         f"""
                     <div class="glass-card">
                         <div class="result-label">Est. Remaining Shelf Life</div>
-                        <div class="result-val" style="color: #6EE7B7;">{max(0, estimated_expiry)} Days</div>
+                        <div class="result-val" style="color: #be123c;">{max(0, estimated_expiry)} Days</div>
                     </div>
                     """,
                         unsafe_allow_html=True,
