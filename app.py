@@ -233,9 +233,9 @@ if not st.session_state.started:
                 <div class="feature-desc">Quality & Status</div>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">⏳</div>
-                <div class="feature-title">Expiry</div>
-                <div class="feature-desc">Shelf Life Estimator</div>
+                <div class="feature-icon">🍽️</div>
+                <div class="feature-title">Recipes</div>
+                <div class="feature-desc">AI Recipe Recommendation</div>
             </div>
         </div>
     """,
